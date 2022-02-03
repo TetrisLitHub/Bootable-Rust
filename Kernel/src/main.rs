@@ -1,3 +1,4 @@
+#![crate_type = "staticlib"]
 #![no_std]
 #![no_main]
 
