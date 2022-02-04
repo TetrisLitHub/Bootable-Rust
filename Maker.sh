@@ -1,1 +1,1 @@
-make geniso # run the makefile LOL
+make $1 # run the makefile LOL
