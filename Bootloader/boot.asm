@@ -2,7 +2,7 @@
 ; BOOT SECTOR
 ;;;;;;;;;;;;;
 
-;[ORG 0x7c00]
+;[ORG 0x7c00] ; this doesn't work when targeting elf in nasm
 [BITS 16]
 
 global _start
@@ -14,7 +14,8 @@ _start:
     mov ds, ax    ; data segment
     mov es, ax    ; extra segment
     mov ss, ax    ; stack segment
-    mov sp, 8000h ; stack pointer
+    mov bp, 7c00h ; base pointer
+    mov sp, 7c00h ; stack pointer
     sti
 
     ; print message
