@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "Rust-OS"
+name = "bootable-rust"
 version = "0.1.0"

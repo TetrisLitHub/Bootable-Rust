@@ -1,22 +1,30 @@
-genfull: clean
+full: clean
 	mkdir -p iso
-	powershell.exe -Command "cd Kernel; cargo rustc -Z build-std=core -- --emit obj=kernelNP.o; cd .."
-	objcopy ./Kernel/kernelNP.o Kernel.o --prefix-alloc-sections='.rust' && rm -rf ./Kernel/kernelNP.o
-	nasm -f elf64 ./Bootloader/boot.asm -o bootsec.o
-	ld Kernel.o bootsec.o -T linker.ld --oformat binary -o img.bin
-	dd if=img.bin of=iso/main.img bs=512 count=2880
+	powershell.exe -Command "cd Kernel; cargo rustc -Z build-std=core -- --emit obj=kernel.o; cd .."
+	ld -melf_i386 -Tlinker.ld -nostdlib --nmagic -o kernel.elf Kernel/kernel.o
+	rm -rf Kernel/kernel.o
+	objcopy -O binary kernel.elf kernel.bin
+	nasm -g -f elf32 -F dwarf -o boot.o ./Bootloader/boot.asm
+	ld -melf_i386 -Ttext=0x7c00 -nostdlib --nmagic -o boot.elf boot.o
+	objcopy -O binary boot.elf boot.bin
+	dd if=/dev/zero of=disk.img bs=512 count=2880
+	dd if=boot.bin of=disk.img bs=512 conv=notrunc
+	dd if=kernel.bin of=disk.img bs=512 seek=1 conv=notrunc
 	genisoimage -quiet -no-emul-boot -V 'BOOT' -input-charset iso8859-1 -o ./out/boot.iso -b main.img -hide main.img iso/
-	rm -rf ./*.img ./*.bin ./iso/ ./*.o
+	rm -rf ./*.img ./*.bin ./iso/ ./*.o ./*.elf
 
-genasm: clean
+asm: clean
 	mkdir -p iso
-	nasm -f elf64 ./Bootloader/boot.asm -o bootsec.o
-	ld bootsec.o -T linker.ld --oformat binary -o img.bin
-	dd if=img.bin of=iso/main.img bs=512 count=2880
+	nasm -g -f elf32 -F dwarf -o boot.o ./Bootloader/boot.asm
+	ld -melf_i386 -Ttext=0x7c00 -nostdlib --nmagic -o boot.elf boot.o
+	objcopy -O binary boot.elf iso/main.img
 	genisoimage -quiet -no-emul-boot -V 'BOOT' -input-charset iso8859-1 -o ./out/boot.iso -b main.img -hide main.img iso/
-	rm -rf ./*.img ./*.bin ./iso/ ./*.o
+	rm -rf ./*.img ./*.bin ./iso/ ./*.o ./*.elf
 
 clean:
-	rm -rf ./*.img ./*.bin ./iso/ ./*.o
+	rm -rf ./*.img ./*.bin ./iso/ ./*.o ./*.elf
 
-#other command: nasm -f bin ./Bootloader/boot.asm -o img.bin
+#notes:
+#nasm -f bin ./Bootloader/boot.asm -o img.bin
+#dd if=img.bin of=iso/main.img bs=512 count=2880
+#-Ttext 0x7c00
