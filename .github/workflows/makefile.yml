@@ -21,7 +21,7 @@ jobs:
       run: rustup update && rustup default nightly
       
     - name: Compile Rust
-      run: cargo rustc -Z build-std=core -- --emit obj=../kernel.o
+      run: cargo rustc -Z build-std=core -- --target 86_baremetal.json --emit obj=../kernel.o
       working-directory: ./Kernel
       
     - name: Compile Assembly
