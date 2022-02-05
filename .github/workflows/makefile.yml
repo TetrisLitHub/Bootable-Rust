@@ -1,4 +1,4 @@
-name: Makefile CI
+name: Build Disk Image
 
 on:
   push:
@@ -17,8 +17,18 @@ jobs:
     - name: Install dependencies
       run: sudo apt install -y nasm cargo
       
-    - name: Configure apps
+    - name: Configure rust
       run: rustup update && rustup default nightly
+      
+    - name: Compile Rust
+      run: cargo rustc -Z build-std=core -- --emit obj=../kernel.o
+      working-directory: ./Kernel
+      
+    - name: Compile Assembly
+      run: make asm
     
-    - name: Build ISO file
-      run: make build-linux
+    - name: Link bootloader and kernel
+      run: mkdir -p iso && ld -m elf_i386 boot.elf kernel.elf -o iso/main.img
+      
+    - name: Create ISO disk image
+      run: genisoimage -quiet -no-emul-boot -V 'BOOT' -input-charset iso8859-1 -o ./out/boot.iso -b main.img -hide main.img iso/
