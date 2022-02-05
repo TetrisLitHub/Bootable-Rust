@@ -21,7 +21,7 @@ jobs:
       run: rustup update && rustup default nightly && rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
       
     - name: Compile Rust
-      run: cargo rustc -Z build-std=core --target x86_baremetal.json -- --emit obj=../kernel.o
+      run: cargo rustc -Z build-std=core --target x86_baremetal.json -- --emit obj=../kernel.o && ld -m elf_i386 -T linker.ld -nostdlib --nmagic -o kernel.elf kernel.o
       working-directory: ./Kernel
       
     - name: Compile Assembly
