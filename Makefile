@@ -5,7 +5,7 @@ build: clean asm rust
 	rm -rf ./*.img ./*.bin ./iso/ ./*.o ./*.elf
 	
 build-linux: clean asm
-	cd Kernel
+	cd ./Kernel
 	cargo rustc -Z build-std=core -- --emit obj=../kernel.o
 	cd ..
 	mkdir -p iso
