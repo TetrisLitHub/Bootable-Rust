@@ -16,6 +16,9 @@ jobs:
     
     - name: Install dependencies
       run: sudo apt install -y nasm cargo
+      
+    - name: Configure apps
+      run: rustup update && rustup default nightly
     
     - name: Build ISO file
       run: make build-linux
