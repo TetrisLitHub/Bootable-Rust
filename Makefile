@@ -3,15 +3,6 @@ build: clean asm rust
 	ld -m elf_i386 boot.elf kernel.elf -o iso/main.img # this isn't linking properly?
 	genisoimage -quiet -no-emul-boot -V 'BOOT' -input-charset iso8859-1 -o ./out/boot.iso -b main.img -hide main.img iso/
 	rm -rf ./*.img ./*.bin ./iso/ ./*.o ./*.elf
-	
-build-linux: clean asm
-	cd ./Kernel
-	cargo rustc -Z build-std=core -- --emit obj=../kernel.o
-	cd ..
-	mkdir -p iso
-	ld -m elf_i386 boot.elf kernel.elf -o iso/main.img # this isn't linking properly?
-	genisoimage -quiet -no-emul-boot -V 'BOOT' -input-charset iso8859-1 -o ./out/boot.iso -b main.img -hide main.img iso/
-	rm -rf ./*.img ./*.bin ./iso/ ./*.o ./*.elf
 
 boot: clean asm
 	mkdir -p iso
