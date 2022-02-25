@@ -1,4 +1,6 @@
-;set of things for printing strings to TTY
+; things for printing strings to TTY in real mode
+
+[BITS 16]
 print: 
     mov bx, 0
 .loop:

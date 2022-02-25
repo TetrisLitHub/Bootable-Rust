@@ -1,4 +1,3 @@
-#![crate_type = "staticlib"]
 #![no_std]
 #![no_main]
 
@@ -10,6 +9,9 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn main() -> ! {
+#[main]
+pub extern "C" fn _start() -> ! { unsafe {
+    const VIDEO: *mut char = 0xb8000 as *mut char;
+    *VIDEO = 'X';
     loop {}
-}
+} }
