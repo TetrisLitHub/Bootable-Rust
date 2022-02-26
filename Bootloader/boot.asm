@@ -10,12 +10,12 @@ global _start
 _start:
 ; set segment registers
 cli
-xor ax, ax    ; code segment
-mov ds, ax    ; data segment
-mov es, ax    ; extra segment
-mov ss, ax    ; stack segment
+xor ax, ax     ; code segment
+mov ds, ax     ; data segment
+mov es, ax     ; extra segment
+mov ss, ax     ; stack segment
 mov bp, 0x7c00 ; base pointer
-mov sp, bp    ; stack pointer
+mov sp, bp     ; stack pointer
 sti
 
 ; print message (removed for now, though)
@@ -62,24 +62,40 @@ ProtMode:
 
     jmp 0x7e00 ; next sector
 
-GDT: ; partially borrowed from stackoverflow (I don't understand the GDT yet)
+GDT: ; finally figured out the GDT. comments are copied from https://github.com/micouy/gniazdo-os/blob/master/asm/gdt.asm to help me remember what they mean
     .null:
         dq 0x0
 
     .code:
-        dw 0xffff       ;Limit
-        dw 0x0          ;Base
-        db 0x0          ;Base
-        db 0b10011010   ;1st flag, Type flag
-        db 0b11001111   ;2nd flag, Limit
-        db 0x0          ;Base
+        dw 0xffff       ; Limit
+        dw 0x0          ; Base
+        db 0x0          ; Base
+
+        ; 7 - present flag
+        ; 5-6 - required privelige
+        ; 4 - is either code or data?
+        ; 3 - code or data?
+        ; 2 - is lower privelige allowed to read/exec?
+        ; 1 - read or write?
+        ; 0 - access flag
+        db 0b10011010   ; ACCESS BYTES
+
+        ; 7 - granularity (multiplies segment limit by 4kB)
+        ; 6 - 16 bit or 32 bit?
+        ; 5 - required by intel to be set to 0
+        ; 4 - free to use
+        ; 0-3 - last bits of segment limit
+        db 0b11001111   ; FLAGS
+
+        db 0x0          ; Base
 
     .data:
         dw 0xffff
         dw 0x0
         db 0x0
-        db 0b10010010
-        db 0b11001111
+        ; the access bytes and flags are the same as in the .code
+        db 0b10010010 ; ACCESS BYTES
+        db 0b11001111 ; FLAGS
         db 0x0
 
     .desc:
