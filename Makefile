@@ -16,7 +16,7 @@ asm: clean
 	@echo "-----\nBUILDING BOOTLOADER\n-----"
 	nasm -f bin -o boot.bin ./Bootloader/boot.asm
 
-rust: clean
+rust: clean # this is made to run powershell bc i am on WSL
 	@echo "-----\nBUILDING KERNEL\n-----"
 	powershell.exe -Command "cd Kernel; cargo clean; cargo rustc --release --target x86_64.json -Z build-std=core -- --emit obj=../kernel.o; cd .."
 	ld -Ttext 0x8000 --oformat binary -o kernel.bin kernel.o

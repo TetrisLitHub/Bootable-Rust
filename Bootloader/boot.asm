@@ -102,8 +102,8 @@ GDT: ; finally figured out the GDT. comments are copied from https://github.com/
         dw $ - GDT - 1
         dd GDT
 
-times 510-($ - $$) db 0
-dw 0xAA55
+times 510-($ - $$) db 0 ; fill up rest of sector with zeros
+dw 0xAA55 ; tells BIOS this is bootable
 
 ;;;;;;;;;;;
 ; STAGE TWO
@@ -113,10 +113,20 @@ KERNEL_ADDR equ 0x8000 ; save Kernel mem address for later
 
 ; if this code executes, the "RM" written on the screen will change to "PM" for protected mode,
 ; letting us know that we're running in protected mode now ;)
-mov ebx, 0xb8000 ; vga address
+%include 'Bootloader/PM_programs/print32.asm'
+mov ebx, 0 ; no offset
 mov al, 'P' ; character to print
 mov ah, 0x07 ; color (0 for bg, 7 for fg)
-mov [ebx], ax ; put character at mem address
+call print_char32
+
+; this isn't working and I don't know why wtfffffff
+; I might actually lose my mind if i cant get this to work
+; TODO: fix this bc its not working
+;mov ebx, 10
+;mov si, string
+;mov ah, 0x07
+;string: db 'adf', 0
+;call print32
 
 jmp $
 
