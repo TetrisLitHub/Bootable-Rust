@@ -109,25 +109,86 @@ dw 0xAA55 ; tells BIOS this is bootable
 ; STAGE TWO
 ;;;;;;;;;;;
 [BITS 32] ; making sure we're in PM
-KERNEL_ADDR equ 0x8000 ; save Kernel mem address for later
 
 ; if this code executes, the "RM" written on the screen will change to "PM" for protected mode,
 ; letting us know that we're running in protected mode now ;)
-%include 'Bootloader/PM_programs/print32.asm'
-mov ebx, 0 ; no offset
-mov al, 'P' ; character to print
-mov ah, 0x07 ; color (0 for bg, 7 for fg)
-call print_char32
+mov word [0xb8000], 0x0750
 
-; this isn't working and I don't know why wtfffffff
-; I might actually lose my mind if i cant get this to work
-; TODO: fix this bc its not working
-;mov ebx, 10
-;mov si, string
-;mov ah, 0x07
-;string: db 'adf', 0
-;call print32
+; set paging tables, credits to the intermezzOS docs for helping me learn this
+; point first entry of p4_table to first entry in p3_table
+mov eax, p3_table ; copy p3_table to EAX
+or eax, 0b11 ; sets first two bits, present bit and writable bit, to one (page is in memory, page can be written to)
+mov dword [p4_table + 0], eax ; copy EAX to the memory address of the zeroth entry in the p4_table
 
-jmp $
+; point first entry of p3_table to first entry in p2_table
+mov eax, p2_table ; copy p2_table to EAX
+or eax, 0b11 ; sets first two bits, present bit and writable bit, to one (page is in memory, page can be written to)
+mov dword [p3_table + 0], eax ; copy EAX to the memory address of the zeroth entry in the p3_table
 
-times 1024-($ - $$) db 0
+; point all p2_table entries to a page
+mov ecx, 0 ; counter
+.loop_p2_table:
+    mov eax, 0x200000 ; 2 MiB
+    mul ecx ; multiply EAX by ECX
+    or eax, 0b10000011 ; extra 1 at the front tells that this is a "huge page", the rest is the same
+    mov [p2_table + ecx * 8], eax ; copy EAX to the memory address of the (ECX * 8)th entry in the p2_table
+
+    inc ecx ; increment ECX by 1 (ECX = ECX+1)
+    cmp ecx, 512 ; is ecx equal to 512?
+    jne .loop_p2_table ; if not, loop back over
+
+mov word [0xb8002], 0x0754 ; set screen to "PT" for paging tables
+
+; enable paging
+; move page table into CR3
+mov eax, p4_table
+mov cr3, eax
+
+; enable PAE
+mov eax, cr4
+or eax, 1 << 5
+mov cr4, eax
+
+; set Long Mode bit
+mov ecx, 0xC0000080
+rdmsr
+or eax, (1 << 8)
+wrmsr ; write MSR TODO: fix this bc it causes a triple fault?
+
+; enable paging :O
+mov eax, cr0
+or eax, (1 << 31 | 1 << 16)
+mov cr0, eax
+
+; set the Long Mode GDT
+lgdt [gdt64.desc]
+
+; paging tables
+section .bss
+align 4096
+p4_table:
+    resb 4096
+p3_table:
+    resb 4096
+p2_table:
+    resb 4096
+
+; long GDT
+section .rodata
+gdt64:
+    .null:
+        dq 0
+    .code: equ $ - gdt64
+        dq (1<<44) | (1<<47) | (1<<41) | (1<<43) | (1<<53)
+        ; 44th bit: Descriptor type, set to 1 for code/data segments
+        ; 47th bit: Present, set to 1 if entry is valid
+        ; 41st bit: Read/Write, set to 1 if it's readable
+        ; 43rd bit: Executable, set to 1 for code segments
+        ; 53rd bit: "64-bit," set to 1 if this is a 64-bit GDT
+    .data: equ $ - gdt64
+        dq (1<<44) | (1<<47) | (1<<41)
+        ; 41st bit: set to 1 if it's writable
+        ; 44th and 47th bit are the same
+    .desc:
+        dw .desc - gdt64 - 1
+        dq gdt64

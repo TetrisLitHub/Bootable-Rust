@@ -9,8 +9,7 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-#[main]
-pub extern "C" fn _start() -> ! { unsafe {
+pub extern "C" fn kernel_main() -> ! { unsafe {
     const VIDEO: *mut char = 0xb8000 as *mut char;
     *VIDEO = 'X';
     loop {}
